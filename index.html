@@ -357,8 +357,9 @@
 </div>
 
 <script>
+ <script>
   const SHEET_ID = "1OB7uMcJb8pM8stI_XK8P1r2nFwIzWWDCKxQ1qLlr1ig";
-  const GID = "0"; // replace if your sheet tab has another gid
+  const GID = "0";
   const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -372,22 +373,6 @@
 
   let APARTMENTS = [];
 
-  function normalizeType(value) {
-    const v = String(value || "").trim().toLowerCase();
-
-    // direct codes
-    if (v === "t1") return "T1";
-    if (v === "t2") return "T2";
-    if (v === "t3") return "T3";
-
-    // text variants
-    if (v.includes("2.5")) return "T1";
-    if (v.includes("2 zimmer") || v === "2") return "T2";
-    if (v.includes("1.5")) return "T3";
-
-    return null;
-  }
-
   function normalizeStatus(value) {
     const v = String(value || "").trim().toLowerCase();
 
@@ -396,6 +381,17 @@
     if (v === "verfügbar" || v === "verfugbar" || v === "visible" || v === "available") return "Verfügbar";
 
     return "Verfügbar";
+  }
+
+  function typeFromRoomsOrSize(roomsValue, sizeValue) {
+    const rooms = parseFloat(String(roomsValue).replace(",", "."));
+    const size = parseFloat(String(sizeValue).replace(",", "."));
+
+    if (rooms === 2.5 || size === 68) return "T1";
+    if (rooms === 2 || rooms === 2.0 || size === 52) return "T2";
+    if (rooms === 1.5 || size === 32) return "T3";
+
+    return null;
   }
 
   async function loadSheetData() {
@@ -408,8 +404,20 @@
 
     return data
       .map(r => {
+        // Sheet structure:
+        // A id
+        // B key
+        // C level
+        // D unit
+        // E rooms
+        // F m²
+        // G Wohnungsnr
+        // H status
+        // I factsheet
         const id = Number((r[0] || "").trim());
-        const type = normalizeType(r[1]);
+        const roomsRaw = (r[4] || "").trim();
+        const sizeRaw = (r[5] || "").replace("m²", "").trim();
+        const type = typeFromRoomsOrSize(roomsRaw, sizeRaw);
 
         if (!id || !type) return null;
 
@@ -417,9 +425,9 @@
           id,
           seq: id,
           type,
-          rooms: TYPE_META[type].rooms,
-          size: TYPE_META[type].size,
-          factsheet: "#",
+          rooms: parseFloat(String(roomsRaw).replace(",", ".")) || TYPE_META[type].rooms,
+          size: parseFloat(String(sizeRaw).replace(",", ".")) || TYPE_META[type].size,
+          factsheet: (r[8] || "").trim() || "#",
           status: normalizeStatus(r[7])
         };
       })
@@ -791,6 +799,14 @@
   init().catch(err => {
     console.error("Sheet loading failed:", err);
   });
+</script>
+
+</body>
+</html>
+
+what went wrong
+
+::contentReference[oaicite:2]{index=2}
 </script>
 
 
