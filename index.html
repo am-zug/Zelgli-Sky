@@ -357,9 +357,8 @@
 </div>
 
 <script>
-<script>
   const SHEET_ID = "1OB7uMcJb8pM8stI_XK8P1r2nFwIzWWDCKxQ1qLlr1ig";
-  const GID = "0"; // change if your tab has another gid
+  const GID = "0"; // replace if your sheet tab has another gid
   const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
   const SVG_NS = "http://www.w3.org/2000/svg";
@@ -373,28 +372,55 @@
 
   let APARTMENTS = [];
 
+  function normalizeType(value) {
+    const v = String(value || "").trim().toLowerCase();
+
+    // direct codes
+    if (v === "t1") return "T1";
+    if (v === "t2") return "T2";
+    if (v === "t3") return "T3";
+
+    // text variants
+    if (v.includes("2.5")) return "T1";
+    if (v.includes("2 zimmer") || v === "2") return "T2";
+    if (v.includes("1.5")) return "T3";
+
+    return null;
+  }
+
+  function normalizeStatus(value) {
+    const v = String(value || "").trim().toLowerCase();
+
+    if (v === "vermietet" || v === "rented") return "Vermietet";
+    if (v === "reserviert" || v === "reserved") return "Reserviert";
+    if (v === "verfügbar" || v === "verfugbar" || v === "visible" || v === "available") return "Verfügbar";
+
+    return "Verfügbar";
+  }
+
   async function loadSheetData() {
     const res = await fetch(CSV_URL + "&_ts=" + Date.now(), { cache: "no-store" });
-    const text = await res.text();
+    if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status}`);
 
+    const text = await res.text();
     const rows = text.trim().split(/\r?\n/).map(r => r.split(","));
     const data = rows.slice(1);
 
     return data
       .map(r => {
-        const id = Number(r[0]);
-        const type = (r[1] || "").trim();
+        const id = Number((r[0] || "").trim());
+        const type = normalizeType(r[1]);
 
-        if (!id || !TYPE_META[type]) return null;
+        if (!id || !type) return null;
 
         return {
           id,
           seq: id,
           type,
-          rooms: Number(r[2]) || TYPE_META[type].rooms,
-          size: Number(r[3]) || TYPE_META[type].size,
-          factsheet: r[4] || "#",
-          status: (r[7] || "").trim() || "Verfügbar"
+          rooms: TYPE_META[type].rooms,
+          size: TYPE_META[type].size,
+          factsheet: "#",
+          status: normalizeStatus(r[7])
         };
       })
       .filter(Boolean);
@@ -647,7 +673,7 @@
       el.addEventListener("mouseleave", () => highlightApt(el.dataset.id, false));
       el.addEventListener("click", () => {
         const apt = APARTMENTS.find(a => a.id === +el.dataset.id);
-        if (apt) window.location.href = apt.factsheet;
+        if (apt && apt.factsheet) window.location.href = apt.factsheet;
       });
     });
   }
@@ -696,7 +722,7 @@
       row.addEventListener("mouseleave", () => highlightApt(row.dataset.id, false));
       row.addEventListener("click", () => {
         const apt = APARTMENTS.find(a => a.id === +row.dataset.id);
-        if (apt) window.location.href = apt.factsheet;
+        if (apt && apt.factsheet) window.location.href = apt.factsheet;
       });
     });
 
@@ -756,20 +782,22 @@
     });
   });
 
-  buildSVG();
-  renderTable();
+  async function init() {
+    APARTMENTS = await loadSheetData();
+    buildSVG();
+    renderTable();
+  }
+
+  init().catch(err => {
+    console.error("Sheet loading failed:", err);
+  });
 </script>
+
 
 </body>
 </html>
 
-give me the full script with the corretion. I dont know what to replace with waht. 
-Please take the one as a base. Keep it as close as possible to this one ! 
-The google sheet uses the type in the b columne
-The id of the appartment is in A. 
-column H gives out the status visible / reserved / rented 
-There are no factsheet etc at the moment - keep them static for the moment 
-Do i need to publish the google sheet? how does that work?
+::contentReference[oaicite:1]{index=1}
 
   
 </script>
