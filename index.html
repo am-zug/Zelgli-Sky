@@ -357,6 +357,11 @@
 </div>
 
 <script>
+<script>
+  const SHEET_ID = "1OB7uMcJb8pM8stI_XK8P1r2nFwIzWWDCKxQ1qLlr1ig";
+  const GID = "0"; // change if your tab has another gid
+  const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+
   const SVG_NS = "http://www.w3.org/2000/svg";
   const svg = document.getElementById("building-svg");
 
@@ -366,27 +371,34 @@
     T3: { rooms: 1.5, size: 32, livingW: 120 * 1.7, livingD: 150 }
   };
 
-  const APARTMENTS = [
-    { id: 1,  seq: 1,  type: "T1", status: "Verfügbar",  factsheet: "#apt-01" },
-    { id: 2,  seq: 2,  type: "T1", status: "Vermietet",  factsheet: "#apt-02" },
-    { id: 3,  seq: 3,  type: "T1", status: "Verfügbar",  factsheet: "#apt-03" },
-    { id: 4,  seq: 4,  type: "T2", status: "Reserviert", factsheet: "#apt-04" },
-    { id: 5,  seq: 5,  type: "T2", status: "Verfügbar",  factsheet: "#apt-05" },
-    { id: 6,  seq: 6,  type: "T1", status: "Vermietet",  factsheet: "#apt-06" },
-    { id: 7,  seq: 7,  type: "T1", status: "Verfügbar",  factsheet: "#apt-07" },
-    { id: 8,  seq: 8,  type: "T1", status: "Verfügbar",  factsheet: "#apt-08" },
-    { id: 9,  seq: 9,  type: "T1", status: "Reserviert", factsheet: "#apt-09" },
-    { id: 10, seq: 10, type: "T1", status: "Verfügbar",  factsheet: "#apt-10" },
-    { id: 11, seq: 11, type: "T3", status: "Vermietet",  factsheet: "#apt-11" },
-    { id: 12, seq: 12, type: "T3", status: "Verfügbar",  factsheet: "#apt-12" },
-    { id: 13, seq: 13, type: "T1", status: "Verfügbar",  factsheet: "#apt-13" },
-    { id: 14, seq: 14, type: "T1", status: "Reserviert", factsheet: "#apt-14" },
-    { id: 15, seq: 15, type: "T1", status: "Verfügbar",  factsheet: "#apt-15" }
-  ].map(a => ({
-    ...a,
-    rooms: TYPE_META[a.type].rooms,
-    size: TYPE_META[a.type].size
-  }));
+  let APARTMENTS = [];
+
+  async function loadSheetData() {
+    const res = await fetch(CSV_URL + "&_ts=" + Date.now(), { cache: "no-store" });
+    const text = await res.text();
+
+    const rows = text.trim().split(/\r?\n/).map(r => r.split(","));
+    const data = rows.slice(1);
+
+    return data
+      .map(r => {
+        const id = Number(r[0]);
+        const type = (r[1] || "").trim();
+
+        if (!id || !TYPE_META[type]) return null;
+
+        return {
+          id,
+          seq: id,
+          type,
+          rooms: Number(r[2]) || TYPE_META[type].rooms,
+          size: Number(r[3]) || TYPE_META[type].size,
+          factsheet: r[4] || "#",
+          status: (r[7] || "").trim() || "Verfügbar"
+        };
+      })
+      .filter(Boolean);
+  }
 
   function getStatusColors(status) {
     if (status === "Vermietet") {
@@ -746,6 +758,20 @@
 
   buildSVG();
   renderTable();
+</script>
+
+</body>
+</html>
+
+give me the full script with the corretion. I dont know what to replace with waht. 
+Please take the one as a base. Keep it as close as possible to this one ! 
+The google sheet uses the type in the b columne
+The id of the appartment is in A. 
+column H gives out the status visible / reserved / rented 
+There are no factsheet etc at the moment - keep them static for the moment 
+Do i need to publish the google sheet? how does that work?
+
+  
 </script>
 
 </body>
