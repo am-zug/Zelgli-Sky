@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZELGLI SKY – Übersicht</title>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -16,10 +16,8 @@
       --text-muted: #6b6b6b;
       --highlight: #e8f4e8;
       --highlight-stroke: #2d7a2d;
-
       --filter-active: #1a1a1a;
       --filter-active-text: #ffffff;
-
       --status-verfuegbar: #2d7a2d;
       --status-reserviert: #d4831a;
       --status-vermietet: #c0392b;
@@ -42,13 +40,12 @@
       gap: 20px;
     }
 
-header h1 {
-  font-family: Helvetica, Arial, Roboto, sans-serif;
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0;
-  line-height: 1;
-
+    header h1 {
+      font-family: Helvetica, Arial, Roboto, sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      letter-spacing: 0;
+      line-height: 1;
     }
 
     header .subtitle {
@@ -163,15 +160,6 @@ header h1 {
       z-index: 10;
     }
 
-    thead th:hover { color: var(--text); }
-
-    thead th .sort-arrow {
-      opacity: 0.3;
-      margin-left: 3px;
-    }
-
-    thead th.sorted .sort-arrow { opacity: 1; }
-
     tbody tr {
       border-bottom: 1px solid #ece9e2;
       cursor: pointer;
@@ -195,9 +183,7 @@ header h1 {
     }
 
     td.apt-id {
-      font-weight: 500;
-      font-family: 'Syne', sans-serif;
-      font-size: 13px;
+      font-weight: 600;
       width: 48px;
     }
 
@@ -219,7 +205,6 @@ header h1 {
     .status-reserviert .status-dot { background: var(--status-reserviert); }
     .status-vermietet .status-dot { background: var(--status-vermietet); }
 
-    .status-label { font-size: 11px; }
     .status-verfuegbar .status-label { color: var(--status-verfuegbar); }
     .status-reserviert .status-label { color: var(--status-reserviert); }
     .status-vermietet .status-label { color: var(--status-vermietet); }
@@ -230,26 +215,18 @@ header h1 {
       text-decoration: none;
       border: 1px solid #ccc;
       padding: 2px 7px;
-      letter-spacing: 0.05em;
-      transition: all 0.1s;
       white-space: nowrap;
     }
 
-    .factsheet-link:hover {
-      color: var(--text);
-      border-color: var(--text);
-      background: var(--highlight);
+    .svg-panel {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: var(--bg);
+      overflow: hidden;
+      position: relative;
     }
-
-.svg-panel {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-  background: var(--bg);
-  overflow: hidden;
-  position: relative;
-}
 
     #building-svg {
       width: 100%;
@@ -261,68 +238,64 @@ header h1 {
       transition: opacity 0.15s;
     }
 
-    .apt-unit .living,
-    .apt-unit .balcony,
-    .apt-unit .wall-left,
-    .apt-unit .wall-back {
+    .apt-unit rect {
       transition: filter 0.15s ease;
     }
 
-    .apt-unit:hover .living,
-    .apt-unit:hover .balcony,
-    .apt-unit:hover .wall-left,
-    .apt-unit:hover .wall-back,
-    .apt-unit.highlighted .living,
-    .apt-unit.highlighted .balcony,
-    .apt-unit.highlighted .wall-left,
-    .apt-unit.highlighted .wall-back {
+    .apt-unit:hover rect,
+    .apt-unit.highlighted rect {
       filter: brightness(0.9) saturate(1.15);
     }
 
     .apt-unit.highlighted .apt-outline {
       stroke: var(--highlight-stroke);
-      stroke-width: 2.5px;
+      stroke-width: 3px;
       opacity: 1;
     }
 
-    .table-panel::-webkit-scrollbar { width: 6px; }
-    .table-panel::-webkit-scrollbar-track { background: transparent; }
-    .table-panel::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
-
     @media (max-width: 900px) {
-  .main {
-    grid-template-columns: 1fr;
-    grid-template-rows: 42vh 58vh;
-    height: auto;
-  }
+      header {
+        padding: 16px 18px 12px;
+      }
 
-  .table-panel {
-    border-right: none;
-    border-bottom: 2px solid var(--border);
-  }
+      header h1 {
+        font-size: 22px;
+      }
 
-  .svg-panel {
-    min-height: 58vh;
-    padding: 10px 10px 16px;
-  }
+      .filter-bar {
+        padding: 10px 18px;
+      }
 
-  #building-svg {
-    width: 100%;
-    height: 100%;
-  }
-}
+      .main {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto 60vh;
+        height: auto;
+      }
+
+      .table-panel {
+        border-right: none;
+        border-bottom: 2px solid var(--border);
+        max-height: 55vh;
+      }
+
+      .svg-panel {
+        min-height: 60vh;
+        padding: 8px;
+      }
+    }
   </style>
 </head>
+
 <body>
 
 <header>
-  <h1>ZELGLI SKY</h1>
+  <h1>Zelgli SKY</h1>
   <span class="subtitle">Mietwohnungen · Übersicht</span>
 </header>
 
 <div class="filter-bar">
   <span class="filter-label">Typ</span>
-  <div class="filter-group" id="filter-type">
+  <div class="filter-group">
     <button class="btn-filter active" data-filter="type" data-val="all">Alle</button>
     <button class="btn-filter" data-filter="type" data-val="T1">2.5 Zimmer</button>
     <button class="btn-filter" data-filter="type" data-val="T2">2 Zimmer</button>
@@ -332,7 +305,7 @@ header h1 {
   <div class="filter-sep"></div>
 
   <span class="filter-label">Status</span>
-  <div class="filter-group" id="filter-status">
+  <div class="filter-group">
     <button class="btn-filter active" data-filter="status" data-val="all">Alle</button>
     <button class="btn-filter" data-filter="status" data-val="Verfügbar">Verfügbar</button>
     <button class="btn-filter" data-filter="status" data-val="Reserviert">Reserviert</button>
@@ -344,13 +317,13 @@ header h1 {
 
 <div class="main">
   <div class="table-panel">
-    <table id="apt-table">
+    <table>
       <thead>
         <tr>
-          <th data-col="id">Nr <span class="sort-arrow">↕</span></th>
-          <th data-col="rooms">Zimmer <span class="sort-arrow">↕</span></th>
-          <th data-col="size">m² <span class="sort-arrow">↕</span></th>
-          <th data-col="status">Status <span class="sort-arrow">↕</span></th>
+          <th data-col="id">Nr</th>
+          <th data-col="rooms">Zimmer</th>
+          <th data-col="size">m²</th>
+          <th data-col="status">Status</th>
           <th>Info</th>
         </tr>
       </thead>
@@ -359,7 +332,7 @@ header h1 {
   </div>
 
   <div class="svg-panel">
-    <svg id="building-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2600 1100"></svg>
+    <svg id="building-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500"></svg>
   </div>
 </div>
 
@@ -372,9 +345,9 @@ header h1 {
   const svg = document.getElementById("building-svg");
 
   const TYPE_META = {
-    T1: { rooms: 2.5, size: 68, livingW: 120,       livingD: 300 },
-    T2: { rooms: 2.0, size: 52, livingW: 120,       livingD: 150 },
-    T3: { rooms: 1.5, size: 32, livingW: 120 * 1.7, livingD: 150 }
+    T1: { rooms: 2.5, size: 68 },
+    T2: { rooms: 2.0, size: 52 },
+    T3: { rooms: 1.5, size: 32 }
   };
 
   let APARTMENTS = [];
@@ -410,16 +383,6 @@ header h1 {
 
     return data
       .map(r => {
-        // Sheet structure:
-        // A id
-        // B key
-        // C level
-        // D unit
-        // E rooms
-        // F m²
-        // G Wohnungsnr
-        // H status
-        // I factsheet
         const id = Number((r[0] || "").trim());
         const roomsRaw = (r[4] || "").trim();
         const sizeRaw = (r[5] || "").replace("m²", "").trim();
@@ -431,9 +394,9 @@ header h1 {
           id,
           seq: id,
           type,
-          rooms: parseFloat(String(roomsRaw).replace(",", ".")) || TYPE_META[type].rooms,
-          size: parseFloat(String(sizeRaw).replace(",", ".")) || TYPE_META[type].size,
-          factsheet: (r[8] || "").trim() || "#",
+          rooms: TYPE_META[type].rooms,
+          size: TYPE_META[type].size,
+          factsheet: "#",
           status: normalizeStatus(r[7])
         };
       })
@@ -443,234 +406,101 @@ header h1 {
   function getStatusColors(status) {
     if (status === "Vermietet") {
       return {
-        living: "#ef8a8a",
-        balcony: "#e56d6d",
-        wallLeft: "#f1b0b0",
-        wallBack: "#f6c3c3"
+        living: "#ef3b3b",
+        balcony: "#f77b7b"
       };
     }
+
     if (status === "Reserviert") {
       return {
-        living: "#f3b35d",
-        balcony: "#e89c37",
-        wallLeft: "#f6c98f",
-        wallBack: "#f9d9ad"
+        living: "#f59f00",
+        balcony: "#ffc266"
       };
     }
+
     return {
-      living: "#6fcf7a",
-      balcony: "#4eb95d",
-      wallLeft: "#93dda0",
-      wallBack: "#b3e9bb"
+      living: "#06bf66",
+      balcony: "#7bd957"
     };
   }
 
-  function iso(x, y, z) {
-    return {
-      x: (x - y) * 0.8660254,
-      y: (x + y) * 0.5 - z
-    };
+  function createRect(x, y, w, h, fill, cls = "") {
+    const rect = document.createElementNS(SVG_NS, "rect");
+    rect.setAttribute("x", x);
+    rect.setAttribute("y", y);
+    rect.setAttribute("width", w);
+    rect.setAttribute("height", h);
+    rect.setAttribute("fill", fill);
+    if (cls) rect.setAttribute("class", cls);
+    return rect;
   }
 
-  function pointsToString(points, offsetX = 0, offsetY = 0) {
-    return points.map(([x, y, z]) => {
-      const p = iso(x, y, z);
-      return `${p.x + offsetX},${p.y + offsetY}`;
-    }).join(" ");
-  }
-
-  function drawPolygon(points, fill, offsetX, offsetY, stroke = "none", cls = "") {
-    const poly = document.createElementNS(SVG_NS, "polygon");
-    poly.setAttribute("points", pointsToString(points, offsetX, offsetY));
-    poly.setAttribute("fill", fill);
-    poly.setAttribute("stroke", stroke);
-    poly.setAttribute("stroke-linejoin", "round");
-    if (cls) poly.setAttribute("class", cls);
-    return poly;
-  }
-
-  function drawGround({ x, y, z, w, d, fill, offsetX = 0, offsetY = 0, cls = "" }) {
-    const A = [x,     y,     z];
-    const B = [x + w, y,     z];
-    const C = [x + w, y + d, z];
-    const D = [x,     y + d, z];
-    return drawPolygon([A, B, C, D], fill, offsetX, offsetY, "none", cls);
-  }
-
-  function drawApartmentShell({
-    x, y, z, w, d, h,
-    fillLeft,
-    fillBack,
-    offsetX = 0,
-    offsetY = 0
-  }) {
-    const g = document.createElementNS(SVG_NS, "g");
-
-    const A  = [x,     y,     z];
-    const B  = [x + w, y,     z];
-    const C  = [x + w, y + d, z];
-    const D  = [x,     y + d, z];
-
-    const A2 = [x,     y,     z + h];
-    const B2 = [x + w, y,     z + h];
-    const C2 = [x + w, y + d, z + h];
-    const D2 = [x,     y + d, z + h];
-
-    const leftFace = [D, D2, A2, A];
-    const backFace = [A, A2, B2, B];
-
-    g.appendChild(drawPolygon(leftFace, fillLeft, offsetX, offsetY, "none", "wall-left"));
-    g.appendChild(drawPolygon(backFace, fillBack, offsetX, offsetY, "none", "wall-back"));
-
-    return g;
-  }
-
-  function drawOutline({ x, y, w, livingD, balconyD, h, offsetX = 0, offsetY = 0 }) {
-    const g = document.createElementNS(SVG_NS, "g");
-
-    const livingA = [x,     y,            0];
-    const livingB = [x + w, y,            0];
-    const livingC = [x + w, y + livingD,  0];
-    const livingDpt = [x,   y + livingD,  0];
-
-    const livingA2 = [x,     y,            h];
-    const livingB2 = [x + w, y,            h];
-    const livingD2 = [x,     y + livingD,  h];
-
-    const balconyC = [x + w, y + livingD + balconyD, 0];
-    const balconyD2D = [x,   y + livingD + balconyD, 0];
-
-    g.appendChild(drawPolygon([livingA, livingB, livingC, livingDpt], "none", offsetX, offsetY, "transparent", "apt-outline"));
-    g.appendChild(drawPolygon([livingDpt, livingD2, livingA2, livingA], "none", offsetX, offsetY, "transparent", "apt-outline"));
-    g.appendChild(drawPolygon([livingA, livingA2, livingB2, livingB], "none", offsetX, offsetY, "transparent", "apt-outline"));
-    g.appendChild(drawPolygon([livingDpt, livingC, balconyC, balconyD2D], "none", offsetX, offsetY, "transparent", "apt-outline"));
-
-    return g;
-  }
-
-  function drawLabel({ x, y, text, offsetX = 0, offsetY = 0 }) {
-    const p = iso(x, y, 0);
+  function createText(x, y, text, size = 26) {
     const t = document.createElementNS(SVG_NS, "text");
-    t.setAttribute("x", p.x + offsetX);
-    t.setAttribute("y", p.y + offsetY + 34);
-    t.setAttribute("text-anchor", "middle");
-    t.setAttribute("font-size", "34");
-    t.setAttribute("font-family", "Syne, sans-serif");
-    t.setAttribute("font-weight", "800");
-    t.setAttribute("fill", "rgba(0,0,0,0.58)");
+    t.setAttribute("x", x);
+    t.setAttribute("y", y);
+    t.setAttribute("font-family", "Helvetica, Arial, sans-serif");
+    t.setAttribute("font-size", size);
+    t.setAttribute("fill", "#1a1a1a");
+    t.setAttribute("dominant-baseline", "middle");
     t.textContent = text;
     return t;
   }
 
-  function drawApartment({
-    apt,
-    x,
-    y,
-    livingW,
-    livingD,
-    balconyD,
-    livingH,
-    offsetX,
-    offsetY
-  }) {
-    const g = document.createElementNS(SVG_NS, "g");
-    const colors = getStatusColors(apt.status);
-
-    const groundLiving = drawGround({
-      x, y, z: 0,
-      w: livingW,
-      d: livingD,
-      fill: colors.living,
-      offsetX, offsetY,
-      cls: "living"
-    });
-
-    const groundBalcony = drawGround({
-      x,
-      y: y + livingD,
-      z: 0,
-      w: livingW,
-      d: balconyD,
-      fill: colors.balcony,
-      offsetX, offsetY,
-      cls: "balcony"
-    });
-
-    const shell = drawApartmentShell({
-      x, y, z: 0,
-      w: livingW,
-      d: livingD,
-      h: livingH,
-      fillLeft: colors.wallLeft,
-      fillBack: colors.wallBack,
-      offsetX, offsetY
-    });
-
-    const outline = drawOutline({
-      x, y,
-      w: livingW,
-      livingD,
-      balconyD,
-      h: livingH,
-      offsetX, offsetY
-    });
-
-    g.appendChild(groundLiving);
-    g.appendChild(groundBalcony);
-    g.appendChild(shell);
-    g.appendChild(outline);
-    g.appendChild(drawLabel({
-      x: x + livingW / 2,
-      y: y + livingD + balconyD + 18,
-      text: `${apt.id}`,
-      offsetX, offsetY
-    }));
-
-    return g;
-  }
-
   function buildSVG() {
+    svg.innerHTML = "";
+
     const scene = document.createElementNS(SVG_NS, "g");
 
-    const balconyD = 120;
-    const livingH = 65;
-    const gapX = 55;
-    const balconyLine = 420;
-    const offsetX = 0;
-    const offsetY = 0;
+    const lightW = 78;
+    const gapX = 7;
+    const normalH = 58;
+    const tallH = normalH * 1.35;
+    const gapY = 7;
 
-    let currentX = 0;
+    const rightEdge = 620;
+    const numberX = rightEdge + 72;
 
-    APARTMENTS.forEach((apt) => {
-      const cfg = TYPE_META[apt.type];
-      const y = balconyLine - balconyD - cfg.livingD;
+    const largeDarkW = lightW * 2.5 * 0.6;
+    const smallDarkW = lightW * 1.5 * 0.6;
 
-      const unit = drawApartment({
-        apt,
-        x: currentX,
-        y,
-        livingW: cfg.livingW,
-        livingD: cfg.livingD,
-        balconyD,
-        livingH,
-        offsetX,
-        offsetY
-      });
+    let y = 0;
 
+    APARTMENTS.forEach(apt => {
+      const isSmall = [4, 5, 11, 12].includes(apt.id);
+      const isTall = [4, 5].includes(apt.id);
+      const h = isTall ? tallH : normalH;
+      const darkW = isSmall ? smallDarkW : largeDarkW;
+      const colors = getStatusColors(apt.status);
+
+      const totalW = darkW + gapX + lightW;
+      const x = rightEdge - totalW;
+
+      const unit = document.createElementNS(SVG_NS, "g");
       unit.setAttribute("class", "apt-unit");
       unit.setAttribute("id", `svg-apt-${apt.id}`);
       unit.setAttribute("data-id", apt.id);
 
+      unit.appendChild(createRect(x, y, darkW, h, colors.living, "living"));
+      unit.appendChild(createRect(x + darkW + gapX, y, lightW, h, colors.balcony, "balcony"));
+
+      const outline = createRect(x, y, totalW, h, "none", "apt-outline");
+      outline.setAttribute("stroke", "transparent");
+      outline.setAttribute("stroke-width", "3");
+      unit.appendChild(outline);
+
+      unit.appendChild(createText(numberX, y + h / 2, apt.id, 30));
+
       scene.appendChild(unit);
-      currentX += cfg.livingW + gapX;
+
+      y += h + gapY;
     });
 
-    svg.innerHTML = "";
     svg.appendChild(scene);
 
     const bbox = scene.getBBox();
     const vb = svg.viewBox.baseVal;
-    const margin = 80;
+    const margin = 60;
 
     const scale = Math.min(
       (vb.width - margin * 2) / bbox.width,
@@ -687,7 +517,7 @@ header h1 {
       el.addEventListener("mouseleave", () => highlightApt(el.dataset.id, false));
       el.addEventListener("click", () => {
         const apt = APARTMENTS.find(a => a.id === +el.dataset.id);
-        if (apt && apt.factsheet) window.location.href = apt.factsheet;
+        if (apt && apt.factsheet && apt.factsheet !== "#") window.location.href = apt.factsheet;
       });
     });
   }
@@ -696,10 +526,10 @@ header h1 {
   let sortCol = "id";
   let sortDir = 1;
 
-  function statusClass(s) {
-    if (s === "Verfügbar") return "status-verfuegbar";
-    if (s === "Reserviert") return "status-reserviert";
-    if (s === "Vermietet") return "status-vermietet";
+  function statusClass(status) {
+    if (status === "Verfügbar") return "status-verfuegbar";
+    if (status === "Reserviert") return "status-reserviert";
+    if (status === "Vermietet") return "status-vermietet";
     return "";
   }
 
@@ -718,6 +548,7 @@ header h1 {
     });
 
     const tbody = document.getElementById("apt-tbody");
+
     tbody.innerHTML = data.map(a => `
       <tr data-id="${a.id}" class="${statusClass(a.status)}">
         <td class="apt-id">${a.id}</td>
@@ -736,7 +567,7 @@ header h1 {
       row.addEventListener("mouseleave", () => highlightApt(row.dataset.id, false));
       row.addEventListener("click", () => {
         const apt = APARTMENTS.find(a => a.id === +row.dataset.id);
-        if (apt && apt.factsheet) window.location.href = apt.factsheet;
+        if (apt && apt.factsheet && apt.factsheet !== "#") window.location.href = apt.factsheet;
       });
     });
 
@@ -753,8 +584,6 @@ header h1 {
 
     const svgUnit = document.getElementById(`svg-apt-${id}`);
     if (svgUnit) svgUnit.classList.toggle("highlighted", on);
-
-    if (on && row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }
 
   document.querySelectorAll(".btn-filter").forEach(btn => {
@@ -778,25 +607,18 @@ header h1 {
   document.querySelectorAll("thead th[data-col]").forEach(th => {
     th.addEventListener("click", () => {
       const col = th.dataset.col;
+
       if (sortCol === col) sortDir *= -1;
       else {
         sortCol = col;
         sortDir = 1;
       }
 
-      document.querySelectorAll("thead th").forEach(t => {
-        t.classList.remove("sorted");
-        const arrow = t.querySelector(".sort-arrow");
-        if (arrow) arrow.textContent = "↕";
-      });
-
-      th.classList.add("sorted");
-      th.querySelector(".sort-arrow").textContent = sortDir === 1 ? "↓" : "↑";
       renderTable();
     });
   });
 
-   async function init() {
+  async function init() {
     APARTMENTS = await loadSheetData();
     buildSVG();
     renderTable();
@@ -804,6 +626,27 @@ header h1 {
 
   init().catch(err => {
     console.error("Sheet loading failed:", err);
+
+    APARTMENTS = [
+      { id: 1, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
+      { id: 2, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
+      { id: 3, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
+      { id: 4, type: "T2", rooms: 2.0, size: 52, status: "Vermietet", factsheet: "#" },
+      { id: 5, type: "T2", rooms: 2.0, size: 52, status: "Reserviert", factsheet: "#" },
+      { id: 6, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" },
+      { id: 7, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" },
+      { id: 8, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
+      { id: 9, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
+      { id: 10, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
+      { id: 11, type: "T3", rooms: 1.5, size: 32, status: "Vermietet", factsheet: "#" },
+      { id: 12, type: "T3", rooms: 1.5, size: 32, status: "Reserviert", factsheet: "#" },
+      { id: 13, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
+      { id: 14, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
+      { id: 15, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" }
+    ];
+
+    buildSVG();
+    renderTable();
   });
 </script>
 
