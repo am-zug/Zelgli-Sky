@@ -396,16 +396,12 @@ async function loadSheetData() {
     let factsheetRaw;
 
     if (isCompactRow(r)) {
-      // New compact sheet format:
-      // Zimmer | m² | Nr | Status | PDF-Link
       roomsRaw = r[0];
       sizeRaw = r[1];
       id = Number((r[2] || "").trim());
       statusRaw = r[3];
       factsheetRaw = r[4];
     } else {
-      // Older sheet format:
-      // A = Nr, E = Zimmer, F = m², H = Status, I = PDF-Link
       id = Number((r[0] || "").trim());
       roomsRaw = r[4];
       sizeRaw = r[5];
@@ -481,15 +477,17 @@ function buildSVG() {
   [...APARTMENTS]
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .forEach(apt => {
-const isSmall = apt.rooms === 1.5 || apt.size === 32 || [4, 5, 11, 12].includes(apt.id);
-const isWide = apt.rooms === 2 || apt.size === 52;
+      const isSmall = apt.rooms === 1.5 || apt.size === 32 || [4, 5, 11, 12].includes(apt.id);
 
-const unitW = isWide ? wideW : normalW;
-const darkH = isSmall ? smallDarkH : largeDarkH;
+      // Width rule:
+      // only apartment 4 and 5 are wide.
+      // Apartment 11 and 12 keep their own normal width.
+      const isWide = [4, 5].includes(apt.id);
+
+      const unitW = isWide ? wideW : normalW;
+      const darkH = isSmall ? smallDarkH : largeDarkH;
       const colors = getStatusColors(apt.status);
 
-      // flipped orientation:
-      // light block on top, dark block below
       const balconyY = baseY - lightH - darkH;
       const livingY = baseY - darkH;
 
