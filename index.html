@@ -425,16 +425,18 @@ function buildSVG() {
     const darkH = isSmall ? smallDarkH : largeDarkH;
     const colors = getStatusColors(apt.status);
 
-    const balconyY = baseY - lightH;
-    const livingY = balconyY - darkH;
+    // 180° + horizontal mirror = vertical flip:
+    // light block on top, dark block below
+    const balconyY = baseY - lightH - darkH;
+    const livingY = baseY - darkH;
 
     const unit = document.createElementNS(SVG_NS, "g");
     unit.setAttribute("class", "apt-unit");
     unit.setAttribute("id", `svg-apt-${apt.id}`);
     unit.setAttribute("data-id", apt.id);
 
-    unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
     unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
+    unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
     unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
 
     unit.addEventListener("click", () => {
