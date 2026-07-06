@@ -422,12 +422,13 @@ function buildSVG() {
   let x = 0;
 
   APARTMENTS.forEach(apt => {
-    const isSmall = [4, 5, 11, 12].includes(apt.id);
-    const isWide = [4, 5].includes(apt.id);
+const isSmall = apt.rooms === 1.5 || apt.size === 32;
 
-    const unitW = isWide ? wideW : normalW;
-    const darkH = isSmall ? smallDarkH : largeDarkH;
-    const colors = getStatusColors(apt.status);
+const isWide = apt.rooms === 2 || apt.size === 52;
+
+const unitW = isWide ? wideW : normalW;
+const darkH = isSmall ? smallDarkH : largeDarkH;
+const colors = getStatusColors(apt.status);
 
     const balconyY = baseY - lightH;
     const livingY = balconyY - darkH;
