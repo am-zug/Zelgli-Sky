@@ -283,6 +283,8 @@
 </div>
 
 <script>
+console.log("Zelgli SKY visual version: reduced-height-11-12-v2");
+
 const SHEET_ID = "1OB7uMcJb8pM8stI_XK8P1r2nFwIzWWDCKxQ1qLlr1ig";
 const GID = "0";
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
@@ -297,6 +299,9 @@ const TYPE_META = {
 };
 
 const DISPLAY_ORDER = [1, 2, 3, 11, 12, 6, 7, 8, 9, 10, 4, 5, 13, 14, 15];
+
+const REDUCED_HEIGHT_IDS = [4, 5, 11, 12];
+const WIDE_IDS = [4, 5];
 
 let APARTMENTS = [];
 let activeFilters = { type: "all", status: "all" };
@@ -477,15 +482,13 @@ function buildSVG() {
   [...APARTMENTS]
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .forEach(apt => {
-      const isSmall = apt.rooms === 1.5 || apt.size === 32 || [4, 5, 11, 12].includes(apt.id);
+      const aptId = Number(apt.id);
 
-      // Width rule:
-      // only apartment 4 and 5 are wide.
-      // Apartment 11 and 12 keep their own normal width.
-      const isWide = [4, 5].includes(apt.id);
+      const isReducedHeight = REDUCED_HEIGHT_IDS.includes(aptId);
+      const isWide = WIDE_IDS.includes(aptId);
 
       const unitW = isWide ? wideW : normalW;
-      const darkH = isSmall ? smallDarkH : largeDarkH;
+      const darkH = isReducedHeight ? smallDarkH : largeDarkH;
       const colors = getStatusColors(apt.status);
 
       const balconyY = baseY - lightH - darkH;
@@ -493,12 +496,12 @@ function buildSVG() {
 
       const unit = document.createElementNS(SVG_NS, "g");
       unit.setAttribute("class", "apt-unit");
-      unit.setAttribute("id", `svg-apt-${apt.id}`);
-      unit.setAttribute("data-id", apt.id);
+      unit.setAttribute("id", `svg-apt-${aptId}`);
+      unit.setAttribute("data-id", aptId);
 
       unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
       unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
-      unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
+      unit.appendChild(createText(x + unitW / 2, numberY, aptId, 18));
 
       unit.addEventListener("click", () => {
         if (apt.factsheet) {
