@@ -1,5 +1,4 @@
 <!DOCTYPE html>
-
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
@@ -231,7 +230,6 @@
       }
     }
   </style>
-
 </head>
 
 <body>
@@ -252,8 +250,7 @@
 
   <div class="filter-sep"></div>
 
-<span class="filter-label">Status</span>
-
+  <span class="filter-label">Status</span>
   <div class="filter-group">
     <button class="btn-filter active" data-filter="status" data-val="all">Alle</button>
     <button class="btn-filter" data-filter="status" data-val="Verfügbar">Verfügbar</button>
@@ -261,8 +258,7 @@
     <button class="btn-filter" data-filter="status" data-val="Vermietet">Vermietet</button>
   </div>
 
-<button class="btn-reset" id="btn-reset">↺ Zurücksetzen</button>
-
+  <button class="btn-reset" id="btn-reset">↺ Zurücksetzen</button>
 </div>
 
 <div class="main">
@@ -274,7 +270,7 @@
     <table>
       <thead>
         <tr>
-          <th data-col="id">Nr</th>
+          <th data-col="displayOrder">Nr</th>
           <th data-col="rooms">Zimmer</th>
           <th data-col="size">m²</th>
           <th data-col="status">Status</th>
@@ -300,9 +296,11 @@ const TYPE_META = {
   T3: { rooms: 1.5, size: 32 }
 };
 
+const DISPLAY_ORDER = [1, 2, 3, 11, 12, 6, 7, 8, 9, 10, 4, 5, 13, 14, 15];
+
 let APARTMENTS = [];
 let activeFilters = { type: "all", status: "all" };
-let sortCol = "id";
+let sortCol = "displayOrder";
 let sortDir = 1;
 
 function parseCSV(text) {
@@ -312,18 +310,32 @@ function parseCSV(text) {
   for (let i = 0; i < text.length; i++) {
     const char = text[i], next = text[i + 1];
 
-    if (char === '"' && next === '"') { cell += '"'; i++; }
-    else if (char === '"') insideQuotes = !insideQuotes;
-    else if (char === "," && !insideQuotes) { row.push(cell); cell = ""; }
-    else if ((char === "\n" || char === "\r") && !insideQuotes) {
-      if (cell || row.length) { row.push(cell); rows.push(row); row = []; cell = ""; }
+    if (char === '"' && next === '"') {
+      cell += '"';
+      i++;
+    } else if (char === '"') {
+      insideQuotes = !insideQuotes;
+    } else if (char === "," && !insideQuotes) {
+      row.push(cell);
+      cell = "";
+    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
+      if (cell || row.length) {
+        row.push(cell);
+        rows.push(row);
+        row = [];
+        cell = "";
+      }
       if (char === "\r" && next === "\n") i++;
     } else {
       cell += char;
     }
   }
 
-  if (cell || row.length) { row.push(cell); rows.push(row); }
+  if (cell || row.length) {
+    row.push(cell);
+    rows.push(row);
+  }
+
   return rows;
 }
 
@@ -337,15 +349,37 @@ function normalizeStatus(value) {
   return "Verfügbar";
 }
 
+function normalizeNumber(value) {
+  return parseFloat(String(value || "")
+    .replace("m²", "")
+    .replace("m2", "")
+    .replace(",", ".")
+    .trim()
+  );
+}
+
 function typeFromRoomsOrSize(roomsValue, sizeValue) {
-  const rooms = parseFloat(String(roomsValue).replace(",", "."));
-  const size = parseFloat(String(sizeValue).replace(",", "."));
+  const rooms = normalizeNumber(roomsValue);
+  const size = normalizeNumber(sizeValue);
 
   if (rooms === 2.5 || size === 68) return "T1";
   if (rooms === 2 || rooms === 2.0 || size === 52) return "T2";
   if (rooms === 1.5 || size === 32) return "T3";
 
   return null;
+}
+
+function isCompactRow(r) {
+  const rooms = normalizeNumber(r[0]);
+  const size = normalizeNumber(r[1]);
+  const nr = Number(String(r[2] || "").trim());
+
+  return (
+    [1.5, 2, 2.5].includes(rooms) &&
+    [32, 52, 68].includes(size) &&
+    Number.isInteger(nr) &&
+    nr > 0
+  );
 }
 
 async function loadSheetData() {
@@ -355,20 +389,43 @@ async function loadSheetData() {
   const rows = parseCSV(await res.text());
 
   return rows.slice(1).map(r => {
-    const id = Number((r[0] || "").trim());
-    const roomsRaw = (r[4] || "").trim();
-    const sizeRaw = (r[5] || "").replace("m²", "").trim();
-    const type = typeFromRoomsOrSize(roomsRaw, sizeRaw);
+    let id;
+    let roomsRaw;
+    let sizeRaw;
+    let statusRaw;
+    let factsheetRaw;
 
+    if (isCompactRow(r)) {
+      // New compact sheet format:
+      // Zimmer | m² | Nr | Status | PDF-Link
+      roomsRaw = r[0];
+      sizeRaw = r[1];
+      id = Number((r[2] || "").trim());
+      statusRaw = r[3];
+      factsheetRaw = r[4];
+    } else {
+      // Older sheet format:
+      // A = Nr, E = Zimmer, F = m², H = Status, I = PDF-Link
+      id = Number((r[0] || "").trim());
+      roomsRaw = r[4];
+      sizeRaw = r[5];
+      statusRaw = r[7];
+      factsheetRaw = r[8];
+    }
+
+    const type = typeFromRoomsOrSize(roomsRaw, sizeRaw);
     if (!id || !type) return null;
+
+    const displayOrderIndex = DISPLAY_ORDER.indexOf(id);
 
     return {
       id,
       type,
       rooms: TYPE_META[type].rooms,
       size: TYPE_META[type].size,
-      factsheet: (r[8] || "").trim(),
-      status: normalizeStatus(r[7])
+      factsheet: String(factsheetRaw || "").trim(),
+      status: normalizeStatus(statusRaw),
+      displayOrder: displayOrderIndex === -1 ? 999 : displayOrderIndex + 1
     };
   }).filter(Boolean);
 }
@@ -421,34 +478,42 @@ function buildSVG() {
 
   let x = 0;
 
-  APARTMENTS.forEach(apt => {
-const isSmall = apt.rooms === 1.5 || apt.size === 32;
+  [...APARTMENTS]
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .forEach(apt => {
+      const isSmall = apt.rooms === 1.5 || apt.size === 32;
 
-const isWide = apt.rooms === 2 || apt.size === 52;
+      // 2-room apartments are wide.
+      // Apartments 4, 5, 11 and 12 are explicitly kept the same visual width.
+      const isWide = apt.rooms === 2 || apt.size === 52 || [4, 5, 11, 12].includes(apt.id);
 
-const unitW = isWide ? wideW : normalW;
-const darkH = isSmall ? smallDarkH : largeDarkH;
-const colors = getStatusColors(apt.status);
+      const unitW = isWide ? wideW : normalW;
+      const darkH = isSmall ? smallDarkH : largeDarkH;
+      const colors = getStatusColors(apt.status);
 
-    const balconyY = baseY - lightH;
-    const livingY = balconyY - darkH;
+      // flipped orientation:
+      // light block on top, dark block below
+      const balconyY = baseY - lightH - darkH;
+      const livingY = baseY - darkH;
 
-    const unit = document.createElementNS(SVG_NS, "g");
-    unit.setAttribute("class", "apt-unit");
-    unit.setAttribute("id", `svg-apt-${apt.id}`);
-    unit.setAttribute("data-id", apt.id);
+      const unit = document.createElementNS(SVG_NS, "g");
+      unit.setAttribute("class", "apt-unit");
+      unit.setAttribute("id", `svg-apt-${apt.id}`);
+      unit.setAttribute("data-id", apt.id);
 
-    unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
-    unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
-    unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
+      unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
+      unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
+      unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
 
-    unit.addEventListener("click", () => {
-      if (apt.factsheet) window.open(apt.factsheet, "_blank", "noopener");
+      unit.addEventListener("click", () => {
+        if (apt.factsheet) {
+          window.open(apt.factsheet, "_blank", "noopener");
+        }
+      });
+
+      scene.appendChild(unit);
+      x += unitW + gapX;
     });
-
-    scene.appendChild(unit);
-    x += unitW + gapX;
-  });
 
   svg.appendChild(scene);
 
@@ -487,9 +552,14 @@ function renderTable() {
   });
 
   data.sort((a, b) => {
-    const av = a[sortCol], bv = b[sortCol];
-    if (typeof av === "string") return sortDir * av.localeCompare(bv);
-    return sortDir * (av - bv);
+    const av = a[sortCol];
+    const bv = b[sortCol];
+
+    if (typeof av === "string") {
+      return sortDir * String(av).localeCompare(String(bv));
+    }
+
+    return sortDir * ((Number(av) || 0) - (Number(bv) || 0));
   });
 
   const tbody = document.getElementById("apt-tbody");
@@ -527,7 +597,11 @@ function highlightApt(id, on) {
 document.querySelectorAll(".btn-filter").forEach(btn => {
   btn.addEventListener("click", () => {
     const group = btn.dataset.filter;
-    document.querySelectorAll(`[data-filter="${group}"]`).forEach(b => b.classList.remove("active"));
+
+    document.querySelectorAll(`[data-filter="${group}"]`).forEach(b => {
+      b.classList.remove("active");
+    });
+
     btn.classList.add("active");
     activeFilters[group] = btn.dataset.val;
     renderTable();
@@ -536,10 +610,30 @@ document.querySelectorAll(".btn-filter").forEach(btn => {
 
 document.getElementById("btn-reset").addEventListener("click", () => {
   activeFilters = { type: "all", status: "all" };
+
   document.querySelectorAll(".btn-filter").forEach(b => {
     b.classList.toggle("active", b.dataset.val === "all");
   });
+
+  sortCol = "displayOrder";
+  sortDir = 1;
+
   renderTable();
+});
+
+document.querySelectorAll("thead th[data-col]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+
+    if (sortCol === col) {
+      sortDir *= -1;
+    } else {
+      sortCol = col;
+      sortDir = 1;
+    }
+
+    renderTable();
+  });
 });
 
 async function init() {
@@ -548,7 +642,9 @@ async function init() {
   renderTable();
 }
 
-init().catch(err => console.error("Sheet loading failed:", err));
+init().catch(err => {
+  console.error("Sheet loading failed:", err);
+});
 </script>
 
 </body>
