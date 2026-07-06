@@ -296,9 +296,11 @@ const TYPE_META = {
   T3: { rooms: 1.5, size: 32 }
 };
 
+const DISPLAY_ORDER = [1, 2, 3, 11, 12, 6, 7, 8, 9, 10, 4, 5, 13, 14, 15];
+
 let APARTMENTS = [];
 let activeFilters = { type: "all", status: "all" };
-let sortCol = "id";
+let sortCol = "displayOrder";
 let sortDir = 1;
 
 function parseCSV(text) {
@@ -358,13 +360,16 @@ async function loadSheetData() {
 
     if (!id || !type) return null;
 
+    const displayOrderIndex = DISPLAY_ORDER.indexOf(id);
+
     return {
       id,
       type,
       rooms: TYPE_META[type].rooms,
       size: TYPE_META[type].size,
       factsheet: (r[8] || "").trim(),
-      status: normalizeStatus(r[7])
+      status: normalizeStatus(r[7]),
+      displayOrder: displayOrderIndex === -1 ? 999 : displayOrderIndex + 1
     };
   }).filter(Boolean);
 }
@@ -417,35 +422,40 @@ function buildSVG() {
 
   let x = 0;
 
-  APARTMENTS.forEach(apt => {
-    const isSmall = [4, 5, 11, 12].includes(apt.id);
-    const isWide = [4, 5].includes(apt.id);
+  [...APARTMENTS]
+    .sort((a, b) => a.displayOrder - b.displayOrder)
+    .forEach(apt => {
+      const isSmall = [4, 5, 11, 12].includes(apt.id);
 
-    const unitW = isWide ? wideW : normalW;
-    const darkH = isSmall ? smallDarkH : largeDarkH;
-    const colors = getStatusColors(apt.status);
+      // After the correction, apartments 11 and 12 are the 2-room units,
+      // so they receive the wider visual shape.
+      const isWide = [11, 12].includes(apt.id);
 
-    // 180° + horizontal mirror = vertical flip:
-    // light block on top, dark block below
-    const balconyY = baseY - lightH - darkH;
-    const livingY = baseY - darkH;
+      const unitW = isWide ? wideW : normalW;
+      const darkH = isSmall ? smallDarkH : largeDarkH;
+      const colors = getStatusColors(apt.status);
 
-    const unit = document.createElementNS(SVG_NS, "g");
-    unit.setAttribute("class", "apt-unit");
-    unit.setAttribute("id", `svg-apt-${apt.id}`);
-    unit.setAttribute("data-id", apt.id);
+      // 180° + horizontal mirror = vertical flip:
+      // light block on top, dark block below
+      const balconyY = baseY - lightH - darkH;
+      const livingY = baseY - darkH;
 
-    unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
-    unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
-    unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
+      const unit = document.createElementNS(SVG_NS, "g");
+      unit.setAttribute("class", "apt-unit");
+      unit.setAttribute("id", `svg-apt-${apt.id}`);
+      unit.setAttribute("data-id", apt.id);
 
-    unit.addEventListener("click", () => {
-      if (apt.factsheet) window.open(apt.factsheet, "_blank", "noopener");
+      unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
+      unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
+      unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
+
+      unit.addEventListener("click", () => {
+        if (apt.factsheet) window.open(apt.factsheet, "_blank", "noopener");
+      });
+
+      scene.appendChild(unit);
+      x += unitW + gapX;
     });
-
-    scene.appendChild(unit);
-    x += unitW + gapX;
-  });
 
   svg.appendChild(scene);
 
@@ -537,6 +547,21 @@ document.getElementById("btn-reset").addEventListener("click", () => {
     b.classList.toggle("active", b.dataset.val === "all");
   });
   renderTable();
+});
+
+document.querySelectorAll("thead th[data-col]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+
+    if (sortCol === col) {
+      sortDir *= -1;
+    } else {
+      sortCol = col;
+      sortDir = 1;
+    }
+
+    renderTable();
+  });
 });
 
 async function init() {
