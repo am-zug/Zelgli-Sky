@@ -551,7 +551,18 @@
           <span class="status-dot"></span>
           <span class="status-label">${a.status}</span>
         </td>
-        <td><a class="factsheet-link" href="${a.factsheet}">PDF ↗</a></td>
+<td>
+    ${
+        a.factsheet
+            ? `<a class="factsheet-link"
+                 href="${a.factsheet}"
+                 target="_blank"
+                 rel="noopener">
+                 PDF ↗
+               </a>`
+            : ""
+    }
+</td>
       </tr>
     `).join("");
 
@@ -610,29 +621,83 @@
   async function init() {
     APARTMENTS = await loadSheetData();
     buildSVG();
-    renderTable();
-  }
+function buildSVG() {
+  svg.innerHTML = "";
 
-  init().catch(err => {
-    console.error("Sheet loading failed:", err);
+  const scene = document.createElementNS(SVG_NS, "g");
 
-    APARTMENTS = [
-      { id: 1, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
-      { id: 2, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 3, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 4, type: "T3", rooms: 1.5, size: 32, status: "Verfügbar", factsheet: "#" },
-      { id: 5, type: "T3", rooms: 1.5, size: 32, status: "Verfügbar", factsheet: "#" },
-      { id: 6, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 7, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" },
-      { id: 8, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" },
-      { id: 9, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 10, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 11, type: "T2", rooms: 2.0, size: 52, status: "Reserviert", factsheet: "#" },
-      { id: 12, type: "T2", rooms: 2.0, size: 52, status: "Verfügbar", factsheet: "#" },
-      { id: 13, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 14, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 15, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" }
-    ];
+  const lightH = 78;
+  const normalW = 58;
+  const wideW = normalW * 1.35;
+  const gapX = 7;
+
+  const largeDarkH = lightH * 2.5 * 0.6;
+  const smallDarkH = lightH * 1.5 * 0.6;
+
+  const topY = 80;
+  const numberY = 455;
+
+  let x = 0;
+
+  [...APARTMENTS].reverse().forEach(apt => {
+    const isSmall = [4, 5, 11, 12].includes(apt.id);
+    const isWide = [4, 5].includes(apt.id);
+
+    const unitW = isWide ? wideW : normalW;
+    const darkH = isSmall ? smallDarkH : largeDarkH;
+    const colors = getStatusColors(apt.status);
+
+    const livingY = topY;
+    const balconyY = topY + darkH;
+    const totalH = darkH + lightH;
+
+    const unit = document.createElementNS(SVG_NS, "g");
+    unit.setAttribute("class", "apt-unit");
+    unit.setAttribute("id", `svg-apt-${apt.id}`);
+    unit.setAttribute("data-id", apt.id);
+
+    unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
+    unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
+
+    const outline = createRect(x, livingY, unitW, totalH, "none", "apt-outline");
+    outline.setAttribute("stroke", "transparent");
+    outline.setAttribute("stroke-width", "3");
+    unit.appendChild(outline);
+
+    unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
+
+    unit.addEventListener("click", () => {
+      if (apt.factsheet) {
+        window.open(apt.factsheet, "_blank", "noopener");
+      }
+    });
+
+    scene.appendChild(unit);
+
+    x += unitW + gapX;
+  });
+
+  svg.appendChild(scene);
+
+  const bbox = scene.getBBox();
+  const vb = svg.viewBox.baseVal;
+  const margin = 20;
+
+  const scale = Math.min(
+    (vb.width - margin * 2) / bbox.width,
+    (vb.height - margin * 2) / bbox.height
+  );
+
+  const tx = (vb.width - bbox.width * scale) / 2 - bbox.x * scale;
+  const ty = (vb.height - bbox.height * scale) / 2 - bbox.y * scale;
+
+  scene.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
+
+  svg.querySelectorAll(".apt-unit").forEach(el => {
+    el.addEventListener("mouseenter", () => highlightApt(el.dataset.id, true));
+    el.addEventListener("mouseleave", () => highlightApt(el.dataset.id, false));
+  });
+}
 
     buildSVG();
     renderTable();
