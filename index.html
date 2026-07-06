@@ -481,14 +481,11 @@ function buildSVG() {
   [...APARTMENTS]
     .sort((a, b) => a.displayOrder - b.displayOrder)
     .forEach(apt => {
-      const isSmall = apt.rooms === 1.5 || apt.size === 32 || [4, 5, 11, 12].includes(apt.id);  // 2-room apartments are wide. // Apartments 4, 5, 11 and 12 are explicitly kept the same visual width. const isWide = apt.rooms === 2 || apt.size === 52 || [4, 5, 11, 12].includes(apt.id);  const unitW = isWide ? wideW : normalW; const darkH = isSmall ? smallDarkH : largeDarkH; const colors = getStatusColors(apt.status);
+const isSmall = apt.rooms === 1.5 || apt.size === 32 || [4, 5, 11, 12].includes(apt.id);
+const isWide = apt.rooms === 2 || apt.size === 52;
 
-      // 2-room apartments are wide.
-      // Apartments 4, 5, 11 and 12 are explicitly kept the same visual width.
-      const isWide = apt.rooms === 2 || apt.size === 52 || [4, 5, 11, 12].includes(apt.id);
-
-      const unitW = isWide ? wideW : normalW;
-      const darkH = isSmall ? smallDarkH : largeDarkH;
+const unitW = isWide ? wideW : normalW;
+const darkH = isSmall ? smallDarkH : largeDarkH;
       const colors = getStatusColors(apt.status);
 
       // flipped orientation:
