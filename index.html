@@ -429,25 +429,9 @@ async function loadSheetData() {
 }
 
 function getStatusColors(status) {
-  if (status === "Vermietet") {
-    return {
-      living: "#5f5f5f",
-      balcony: "#818181"
-    };
-  }
-
-  if (status === "Reserviert") {
-    return {
-      living: "#b9b9b9",
-      balcony: "#d3d3d3"
-    };
-  }
-
-  return {
-    living: "#e6d496",
-    balcony: "#f2e5ac"
-  };
-}
+  if (status === "Vermietet") return { living: "#ef3b3b", balcony: "#f77b7b" };
+  if (status === "Reserviert") return { living: "#f59f00", balcony: "#ffc266" };
+  return { living: "#06bf66", balcony: "#7bd957" };
 }
 
 function createRect(x, y, w, h, fill, cls = "") {
