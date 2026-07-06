@@ -332,101 +332,75 @@
 </div>
 
 <script>
-  const SHEET_ID = "1OB7uMcJb8pM8stI_XK8P1r2nFwIzWWDCKxQ1qLlr1ig";
-  const GID = "0";
-  const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
+const SHEET_ID = "1OB7uMcJb8pM8stI_XK8P1r2nFwIzWWDCKxQ1qLlr1ig";
+const GID = "0";
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}`;
 
-  const SVG_NS = "http://www.w3.org/2000/svg";
-  const svg = document.getElementById("building-svg");
+const SVG_NS = "http://www.w3.org/2000/svg";
+const svg = document.getElementById("building-svg");
 
-  const TYPE_META = {
-    T1: { rooms: 2.5, size: 68 },
-    T2: { rooms: 2.0, size: 52 },
-    T3: { rooms: 1.5, size: 32 }
-  };
+const TYPE_META = {
+  T1: { rooms: 2.5, size: 68 },
+  T2: { rooms: 2.0, size: 52 },
+  T3: { rooms: 1.5, size: 32 }
+};
 
-  let APARTMENTS = [];
+let APARTMENTS = [];
+let activeFilters = { type: "all", status: "all" };
+let sortCol = "id";
+let sortDir = 1;
 
-  function normalizeStatus(value) {
-    const v = String(value || "").trim().toLowerCase();
-
-    if (v === "vermietet" || v === "rented") return "Vermietet";
-    if (v === "reserviert" || v === "reserved") return "Reserviert";
-    if (v === "verfügbar" || v === "verfugbar" || v === "visible" || v === "available") return "Verfügbar";
-
-    return "Verfügbar";
-  }
-
-  function typeFromRoomsOrSize(roomsValue, sizeValue) {
-    const rooms = parseFloat(String(roomsValue).replace(",", "."));
-    const size = parseFloat(String(sizeValue).replace(",", "."));
-
-    if (rooms === 2.5 || size === 68) return "T1";
-    if (rooms === 2 || rooms === 2.0 || size === 52) return "T2";
-    if (rooms === 1.5 || size === 32) return "T3";
-
-    return null;
-  }
-
-  async function loadSheetData() {
-    function parseCSV(text) {
+function parseCSV(text) {
   const rows = [];
-  let row = [];
-  let cell = "";
-  let insideQuotes = false;
+  let row = [], cell = "", insideQuotes = false;
 
   for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
+    const char = text[i], next = text[i + 1];
 
-    if (char === '"' && next === '"') {
-      cell += '"';
-      i++;
-    } else if (char === '"') {
-      insideQuotes = !insideQuotes;
-    } else if (char === "," && !insideQuotes) {
-      row.push(cell);
-      cell = "";
-    } else if ((char === "\n" || char === "\r") && !insideQuotes) {
-      if (cell || row.length) {
-        row.push(cell);
-        rows.push(row);
-        row = [];
-        cell = "";
-      }
+    if (char === '"' && next === '"') { cell += '"'; i++; }
+    else if (char === '"') insideQuotes = !insideQuotes;
+    else if (char === "," && !insideQuotes) { row.push(cell); cell = ""; }
+    else if ((char === "\n" || char === "\r") && !insideQuotes) {
+      if (cell || row.length) { row.push(cell); rows.push(row); row = []; cell = ""; }
       if (char === "\r" && next === "\n") i++;
-    } else {
-      cell += char;
-    }
+    } else cell += char;
   }
 
-  if (cell || row.length) {
-    row.push(cell);
-    rows.push(row);
-  }
-
+  if (cell || row.length) { row.push(cell); rows.push(row); }
   return rows;
+}
+
+function normalizeStatus(value) {
+  const v = String(value || "").trim().toLowerCase();
+  if (v === "vermietet" || v === "rented") return "Vermietet";
+  if (v === "reserviert" || v === "reserved") return "Reserviert";
+  if (v === "verfügbar" || v === "verfugbar" || v === "visible" || v === "available") return "Verfügbar";
+  return "Verfügbar";
+}
+
+function typeFromRoomsOrSize(roomsValue, sizeValue) {
+  const rooms = parseFloat(String(roomsValue).replace(",", "."));
+  const size = parseFloat(String(sizeValue).replace(",", "."));
+  if (rooms === 2.5 || size === 68) return "T1";
+  if (rooms === 2 || rooms === 2.0 || size === 52) return "T2";
+  if (rooms === 1.5 || size === 32) return "T3";
+  return null;
 }
 
 async function loadSheetData() {
   const res = await fetch(CSV_URL + "&_ts=" + Date.now(), { cache: "no-store" });
   if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status}`);
 
-  const text = await res.text();
-  const rows = parseCSV(text);
-  const data = rows.slice(1);
-
-  return data.map(r => {
+  const rows = parseCSV(await res.text());
+  return rows.slice(1).map(r => {
     const id = Number((r[0] || "").trim());
     const roomsRaw = (r[4] || "").trim();
     const sizeRaw = (r[5] || "").replace("m²", "").trim();
     const type = typeFromRoomsOrSize(roomsRaw, sizeRaw);
-
     if (!id || !type) return null;
 
     return {
       id,
-      seq: id,
       type,
       rooms: TYPE_META[type].rooms,
       size: TYPE_META[type].size,
@@ -436,9 +410,38 @@ async function loadSheetData() {
   }).filter(Boolean);
 }
 
+function getStatusColors(status) {
+  if (status === "Vermietet") return { living: "#ef3b3b", balcony: "#f77b7b" };
+  if (status === "Reserviert") return { living: "#f59f00", balcony: "#ffc266" };
+  return { living: "#06bf66", balcony: "#7bd957" };
+}
+
+function createRect(x, y, w, h, fill, cls = "") {
+  const rect = document.createElementNS(SVG_NS, "rect");
+  rect.setAttribute("x", x);
+  rect.setAttribute("y", y);
+  rect.setAttribute("width", w);
+  rect.setAttribute("height", h);
+  rect.setAttribute("fill", fill);
+  if (cls) rect.setAttribute("class", cls);
+  return rect;
+}
+
+function createText(x, y, text, size = 18) {
+  const t = document.createElementNS(SVG_NS, "text");
+  t.setAttribute("x", x);
+  t.setAttribute("y", y);
+  t.setAttribute("font-family", "Helvetica, Arial, sans-serif");
+  t.setAttribute("font-size", size);
+  t.setAttribute("fill", "#1a1a1a");
+  t.setAttribute("text-anchor", "middle");
+  t.setAttribute("dominant-baseline", "middle");
+  t.textContent = text;
+  return t;
+}
+
 function buildSVG() {
   svg.innerHTML = "";
-
   const scene = document.createElementNS(SVG_NS, "g");
 
   const lightH = 78;
@@ -451,20 +454,17 @@ function buildSVG() {
 
   const topY = 80;
   const numberY = 455;
-
   let x = 0;
 
   [...APARTMENTS].reverse().forEach(apt => {
     const isSmall = [4, 5, 11, 12].includes(apt.id);
     const isWide = [4, 5].includes(apt.id);
-
     const unitW = isWide ? wideW : normalW;
     const darkH = isSmall ? smallDarkH : largeDarkH;
     const colors = getStatusColors(apt.status);
 
     const balconyY = topY;
     const livingY = topY + lightH;
-    const totalH = lightH + darkH;
 
     const unit = document.createElementNS(SVG_NS, "g");
     unit.setAttribute("class", "apt-unit");
@@ -473,18 +473,10 @@ function buildSVG() {
 
     unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
     unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
-
-    const outline = createRect(x, balconyY, unitW, totalH, "none", "apt-outline");
-    outline.setAttribute("stroke", "transparent");
-    outline.setAttribute("stroke-width", "3");
-    unit.appendChild(outline);
-
     unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
 
     unit.addEventListener("click", () => {
-      if (apt.factsheet) {
-        window.open(apt.factsheet, "_blank", "noopener");
-      }
+      if (apt.factsheet) window.open(apt.factsheet, "_blank", "noopener");
     });
 
     scene.appendChild(unit);
@@ -504,7 +496,6 @@ function buildSVG() {
 
   const tx = (vb.width - bbox.width * scale) / 2 - bbox.x * scale;
   const ty = (vb.height - bbox.height * scale) / 2 - bbox.y * scale;
-
   scene.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
 
   svg.querySelectorAll(".apt-unit").forEach(el => {
@@ -513,56 +504,93 @@ function buildSVG() {
   });
 }
 
-  function highlightApt(id, on) {
-    const row = document.querySelector(`#apt-tbody tr[data-id="${id}"]`);
-    if (row) row.classList.toggle("highlighted", on);
+function statusClass(status) {
+  if (status === "Verfügbar") return "status-verfuegbar";
+  if (status === "Reserviert") return "status-reserviert";
+  if (status === "Vermietet") return "status-vermietet";
+  return "";
+}
 
-    const svgUnit = document.getElementById(`svg-apt-${id}`);
-    if (svgUnit) svgUnit.classList.toggle("highlighted", on);
-  }
-
-  document.querySelectorAll(".btn-filter").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const group = btn.dataset.filter;
-      document.querySelectorAll(`[data-filter="${group}"]`).forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeFilters[group] = btn.dataset.val;
-      renderTable();
-    });
+function renderTable() {
+  let data = APARTMENTS.filter(a => {
+    if (activeFilters.type !== "all" && a.type !== activeFilters.type) return false;
+    if (activeFilters.status !== "all" && a.status !== activeFilters.status) return false;
+    return true;
   });
 
-  document.getElementById("btn-reset").addEventListener("click", () => {
-    activeFilters = { type: "all", status: "all" };
-    document.querySelectorAll(".btn-filter").forEach(b => {
-      b.classList.toggle("active", b.dataset.val === "all");
-    });
+  data.sort((a, b) => {
+    const av = a[sortCol], bv = b[sortCol];
+    if (typeof av === "string") return sortDir * av.localeCompare(bv);
+    return sortDir * (av - bv);
+  });
+
+  const tbody = document.getElementById("apt-tbody");
+  tbody.innerHTML = data.map(a => `
+    <tr data-id="${a.id}" class="${statusClass(a.status)}">
+      <td class="apt-id">${a.id}</td>
+      <td class="apt-rooms">${a.rooms}</td>
+      <td class="apt-size">${a.size} m²</td>
+      <td><span class="status-dot"></span><span class="status-label">${a.status}</span></td>
+      <td>${a.factsheet ? `<a class="factsheet-link" href="${a.factsheet}" target="_blank" rel="noopener">PDF ↗</a>` : ""}</td>
+    </tr>
+  `).join("");
+
+  tbody.querySelectorAll("tr").forEach(row => {
+    row.addEventListener("mouseenter", () => highlightApt(row.dataset.id, true));
+    row.addEventListener("mouseleave", () => highlightApt(row.dataset.id, false));
+  });
+
+  document.querySelectorAll(".apt-unit").forEach(el => {
+    const id = +el.dataset.id;
+    const visible = data.some(a => a.id === id);
+    el.style.opacity = visible ? "1" : "0.2";
+  });
+}
+
+function highlightApt(id, on) {
+  const row = document.querySelector(`#apt-tbody tr[data-id="${id}"]`);
+  if (row) row.classList.toggle("highlighted", on);
+
+  const svgUnit = document.getElementById(`svg-apt-${id}`);
+  if (svgUnit) svgUnit.classList.toggle("highlighted", on);
+}
+
+document.querySelectorAll(".btn-filter").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const group = btn.dataset.filter;
+    document.querySelectorAll(`[data-filter="${group}"]`).forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+    activeFilters[group] = btn.dataset.val;
     renderTable();
   });
+});
 
-  document.querySelectorAll("thead th[data-col]").forEach(th => {
-    th.addEventListener("click", () => {
-      const col = th.dataset.col;
-
-      if (sortCol === col) sortDir *= -1;
-      else {
-        sortCol = col;
-        sortDir = 1;
-      }
-
-      renderTable();
-    });
+document.getElementById("btn-reset").addEventListener("click", () => {
+  activeFilters = { type: "all", status: "all" };
+  document.querySelectorAll(".btn-filter").forEach(b => {
+    b.classList.toggle("active", b.dataset.val === "all");
   });
+  renderTable();
+});
 
-  async function init() {
-    APARTMENTS = await loadSheetData();
-    buildSVG();
+document.querySelectorAll("thead th[data-col]").forEach(th => {
+  th.addEventListener("click", () => {
+    const col = th.dataset.col;
+    if (sortCol === col) sortDir *= -1;
+    else { sortCol = col; sortDir = 1; }
     renderTable();
-  }
-
-  init().catch(err => {
-    console.error("Sheet loading failed:", err);
   });
+});
+
+async function init() {
+  APARTMENTS = await loadSheetData();
+  buildSVG();
+  renderTable();
+}
+
+init().catch(err => console.error("Sheet loading failed:", err));
 </script>
+  
 
 </body>
 </html>
