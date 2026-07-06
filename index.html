@@ -391,7 +391,7 @@
           type,
           rooms: TYPE_META[type].rooms,
           size: TYPE_META[type].size,
-          factsheet: "#",
+          factsheet: (r[8] || "").trim(),
           status: normalizeStatus(r[7])
         };
       })
@@ -400,23 +400,14 @@
 
   function getStatusColors(status) {
     if (status === "Vermietet") {
-      return {
-        living: "#ef3b3b",
-        balcony: "#f77b7b"
-      };
+      return { living: "#ef3b3b", balcony: "#f77b7b" };
     }
 
     if (status === "Reserviert") {
-      return {
-        living: "#f59f00",
-        balcony: "#ffc266"
-      };
+      return { living: "#f59f00", balcony: "#ffc266" };
     }
 
-    return {
-      living: "#06bf66",
-      balcony: "#7bd957"
-    };
+    return { living: "#06bf66", balcony: "#7bd957" };
   }
 
   function createRect(x, y, w, h, fill, cls = "") {
@@ -461,7 +452,7 @@
 
     let x = 0;
 
-    APARTMENTS.forEach(apt => {
+    [...APARTMENTS].reverse().forEach(apt => {
       const isSmall = [4, 5, 11, 12].includes(apt.id);
       const isWide = [4, 5].includes(apt.id);
 
@@ -469,24 +460,30 @@
       const darkH = isSmall ? smallDarkH : largeDarkH;
       const colors = getStatusColors(apt.status);
 
-      const balconyY = topY;
-      const livingY = topY + lightH;
-      const totalH = lightH + darkH;
+      const livingY = topY;
+      const balconyY = topY + darkH;
+      const totalH = darkH + lightH;
 
       const unit = document.createElementNS(SVG_NS, "g");
       unit.setAttribute("class", "apt-unit");
       unit.setAttribute("id", `svg-apt-${apt.id}`);
       unit.setAttribute("data-id", apt.id);
 
-      unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
       unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
+      unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
 
-      const outline = createRect(x, balconyY, unitW, totalH, "none", "apt-outline");
+      const outline = createRect(x, livingY, unitW, totalH, "none", "apt-outline");
       outline.setAttribute("stroke", "transparent");
       outline.setAttribute("stroke-width", "3");
       unit.appendChild(outline);
 
       unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
+
+      unit.addEventListener("click", () => {
+        if (apt.factsheet) {
+          window.open(apt.factsheet, "_blank", "noopener");
+        }
+      });
 
       scene.appendChild(unit);
 
@@ -551,18 +548,13 @@
           <span class="status-dot"></span>
           <span class="status-label">${a.status}</span>
         </td>
-<td>
-    ${
-        a.factsheet
-            ? `<a class="factsheet-link"
-                 href="${a.factsheet}"
-                 target="_blank"
-                 rel="noopener">
-                 PDF ↗
-               </a>`
-            : ""
-    }
-</td>
+        <td>
+          ${
+            a.factsheet
+              ? `<a class="factsheet-link" href="${a.factsheet}" target="_blank" rel="noopener">PDF ↗</a>`
+              : ""
+          }
+        </td>
       </tr>
     `).join("");
 
@@ -621,86 +613,11 @@
   async function init() {
     APARTMENTS = await loadSheetData();
     buildSVG();
-function buildSVG() {
-  svg.innerHTML = "";
-
-  const scene = document.createElementNS(SVG_NS, "g");
-
-  const lightH = 78;
-  const normalW = 58;
-  const wideW = normalW * 1.35;
-  const gapX = 7;
-
-  const largeDarkH = lightH * 2.5 * 0.6;
-  const smallDarkH = lightH * 1.5 * 0.6;
-
-  const topY = 80;
-  const numberY = 455;
-
-  let x = 0;
-
-  [...APARTMENTS].reverse().forEach(apt => {
-    const isSmall = [4, 5, 11, 12].includes(apt.id);
-    const isWide = [4, 5].includes(apt.id);
-
-    const unitW = isWide ? wideW : normalW;
-    const darkH = isSmall ? smallDarkH : largeDarkH;
-    const colors = getStatusColors(apt.status);
-
-    const livingY = topY;
-    const balconyY = topY + darkH;
-    const totalH = darkH + lightH;
-
-    const unit = document.createElementNS(SVG_NS, "g");
-    unit.setAttribute("class", "apt-unit");
-    unit.setAttribute("id", `svg-apt-${apt.id}`);
-    unit.setAttribute("data-id", apt.id);
-
-    unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
-    unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
-
-    const outline = createRect(x, livingY, unitW, totalH, "none", "apt-outline");
-    outline.setAttribute("stroke", "transparent");
-    outline.setAttribute("stroke-width", "3");
-    unit.appendChild(outline);
-
-    unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
-
-    unit.addEventListener("click", () => {
-      if (apt.factsheet) {
-        window.open(apt.factsheet, "_blank", "noopener");
-      }
-    });
-
-    scene.appendChild(unit);
-
-    x += unitW + gapX;
-  });
-
-  svg.appendChild(scene);
-
-  const bbox = scene.getBBox();
-  const vb = svg.viewBox.baseVal;
-  const margin = 20;
-
-  const scale = Math.min(
-    (vb.width - margin * 2) / bbox.width,
-    (vb.height - margin * 2) / bbox.height
-  );
-
-  const tx = (vb.width - bbox.width * scale) / 2 - bbox.x * scale;
-  const ty = (vb.height - bbox.height * scale) / 2 - bbox.y * scale;
-
-  scene.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
-
-  svg.querySelectorAll(".apt-unit").forEach(el => {
-    el.addEventListener("mouseenter", () => highlightApt(el.dataset.id, true));
-    el.addEventListener("mouseleave", () => highlightApt(el.dataset.id, false));
-  });
-}
-
-    buildSVG();
     renderTable();
+  }
+
+  init().catch(err => {
+    console.error("Sheet loading failed:", err);
   });
 </script>
 
