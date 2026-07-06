@@ -1,11 +1,9 @@
-
 <!DOCTYPE html>
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZELGLI SKY – Übersicht</title>
-
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <style>
@@ -47,7 +45,6 @@
       font-family: Helvetica, Arial, Roboto, sans-serif;
       font-size: 24px;
       font-weight: 700;
-      letter-spacing: 0;
       line-height: 1;
     }
 
@@ -97,17 +94,12 @@
       font-family: 'DM Mono', monospace;
       font-size: 11px;
       cursor: pointer;
-      letter-spacing: 0.04em;
-      transition: all 0.12s;
       color: var(--text);
     }
-
-    .btn-filter:hover { background: #f0ede6; }
 
     .btn-filter.active {
       background: var(--filter-active);
       color: var(--filter-active-text);
-      border-color: var(--filter-active);
     }
 
     .btn-reset {
@@ -119,24 +111,14 @@
       font-size: 11px;
       cursor: pointer;
       color: var(--text-muted);
-      letter-spacing: 0.04em;
-      transition: all 0.12s;
-    }
-
-    .btn-reset:hover {
-      border-color: var(--border);
-      color: var(--text);
     }
 
     .main {
       display: flex;
       flex-direction: column;
-      height: auto;
-      overflow: visible;
     }
 
     .svg-panel {
-      order: 1;
       height: 360px;
       padding: 18px;
       background: var(--bg);
@@ -144,17 +126,14 @@
       overflow: hidden;
     }
 
-    .table-panel {
-      order: 2;
-      border-right: none;
-      overflow-y: visible;
-      background: var(--surface);
-    }
-
     #building-svg {
       width: 100%;
       height: 100%;
       display: block;
+    }
+
+    .table-panel {
+      background: var(--surface);
     }
 
     table {
@@ -173,16 +152,12 @@
       text-transform: uppercase;
       letter-spacing: 0.1em;
       color: var(--text-muted);
-      white-space: nowrap;
       cursor: pointer;
-      user-select: none;
-      z-index: 10;
     }
 
     tbody tr {
       border-bottom: 1px solid #ece9e2;
       cursor: pointer;
-      transition: background 0.1s;
     }
 
     tbody tr:hover,
@@ -190,25 +165,14 @@
       background: var(--highlight);
     }
 
-    tbody tr.highlighted {
-      outline: 2px solid var(--highlight-stroke);
-      outline-offset: -2px;
-    }
-
     td {
       padding: 8px 12px;
       font-size: 12px;
-      vertical-align: middle;
     }
 
     td.apt-id {
       font-weight: 600;
       width: 48px;
-    }
-
-    td.apt-size,
-    td.apt-rooms {
-      font-variant-numeric: tabular-nums;
     }
 
     .status-dot {
@@ -242,19 +206,9 @@
       transition: opacity 0.15s;
     }
 
-    .apt-unit rect {
-      transition: filter 0.15s ease;
-    }
-
     .apt-unit:hover rect,
     .apt-unit.highlighted rect {
       filter: brightness(0.9) saturate(1.15);
-    }
-
-    .apt-unit.highlighted .apt-outline {
-      stroke: var(--highlight-stroke);
-      stroke-width: 3px;
-      opacity: 1;
     }
 
     @media (max-width: 900px) {
@@ -273,10 +227,6 @@
       .svg-panel {
         height: 300px;
         padding: 8px;
-      }
-
-      .table-panel {
-        max-height: none;
       }
     }
   </style>
@@ -364,7 +314,9 @@ function parseCSV(text) {
     else if ((char === "\n" || char === "\r") && !insideQuotes) {
       if (cell || row.length) { row.push(cell); rows.push(row); row = []; cell = ""; }
       if (char === "\r" && next === "\n") i++;
-    } else cell += char;
+    } else {
+      cell += char;
+    }
   }
 
   if (cell || row.length) { row.push(cell); rows.push(row); }
@@ -373,18 +325,22 @@ function parseCSV(text) {
 
 function normalizeStatus(value) {
   const v = String(value || "").trim().toLowerCase();
+
   if (v === "vermietet" || v === "rented") return "Vermietet";
   if (v === "reserviert" || v === "reserved") return "Reserviert";
   if (v === "verfügbar" || v === "verfugbar" || v === "visible" || v === "available") return "Verfügbar";
+
   return "Verfügbar";
 }
 
 function typeFromRoomsOrSize(roomsValue, sizeValue) {
   const rooms = parseFloat(String(roomsValue).replace(",", "."));
   const size = parseFloat(String(sizeValue).replace(",", "."));
+
   if (rooms === 2.5 || size === 68) return "T1";
   if (rooms === 2 || rooms === 2.0 || size === 52) return "T2";
   if (rooms === 1.5 || size === 32) return "T3";
+
   return null;
 }
 
@@ -393,11 +349,13 @@ async function loadSheetData() {
   if (!res.ok) throw new Error(`Sheet fetch failed: ${res.status}`);
 
   const rows = parseCSV(await res.text());
+
   return rows.slice(1).map(r => {
     const id = Number((r[0] || "").trim());
     const roomsRaw = (r[4] || "").trim();
     const sizeRaw = (r[5] || "").replace("m²", "").trim();
     const type = typeFromRoomsOrSize(roomsRaw, sizeRaw);
+
     if (!id || !type) return null;
 
     return {
@@ -443,6 +401,7 @@ function createText(x, y, text, size = 18) {
 
 function buildSVG() {
   svg.innerHTML = "";
+
   const scene = document.createElementNS(SVG_NS, "g");
 
   const lightH = 78;
@@ -453,27 +412,29 @@ function buildSVG() {
   const largeDarkH = lightH * 2.5 * 0.6;
   const smallDarkH = lightH * 1.5 * 0.6;
 
-  const topY = 80;
-  const numberY = 455;
+  const baseY = 330;
+  const numberY = 410;
+
   let x = 0;
 
-  [...APARTMENTS].reverse().forEach(apt => {
+  APARTMENTS.forEach(apt => {
     const isSmall = [4, 5, 11, 12].includes(apt.id);
     const isWide = [4, 5].includes(apt.id);
+
     const unitW = isWide ? wideW : normalW;
     const darkH = isSmall ? smallDarkH : largeDarkH;
     const colors = getStatusColors(apt.status);
 
-    const balconyY = topY;
-    const livingY = topY + lightH;
+    const balconyY = baseY - lightH;
+    const livingY = balconyY - darkH;
 
     const unit = document.createElementNS(SVG_NS, "g");
     unit.setAttribute("class", "apt-unit");
     unit.setAttribute("id", `svg-apt-${apt.id}`);
     unit.setAttribute("data-id", apt.id);
 
-    unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
     unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
+    unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
     unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
 
     unit.addEventListener("click", () => {
@@ -497,6 +458,7 @@ function buildSVG() {
 
   const tx = (vb.width - bbox.width * scale) / 2 - bbox.x * scale;
   const ty = (vb.height - bbox.height * scale) / 2 - bbox.y * scale;
+
   scene.setAttribute("transform", `translate(${tx}, ${ty}) scale(${scale})`);
 
   svg.querySelectorAll(".apt-unit").forEach(el => {
@@ -526,11 +488,12 @@ function renderTable() {
   });
 
   const tbody = document.getElementById("apt-tbody");
+
   tbody.innerHTML = data.map(a => `
     <tr data-id="${a.id}" class="${statusClass(a.status)}">
       <td class="apt-id">${a.id}</td>
-      <td class="apt-rooms">${a.rooms}</td>
-      <td class="apt-size">${a.size} m²</td>
+      <td>${a.rooms}</td>
+      <td>${a.size} m²</td>
       <td><span class="status-dot"></span><span class="status-label">${a.status}</span></td>
       <td>${a.factsheet ? `<a class="factsheet-link" href="${a.factsheet}" target="_blank" rel="noopener">PDF ↗</a>` : ""}</td>
     </tr>
@@ -574,15 +537,6 @@ document.getElementById("btn-reset").addEventListener("click", () => {
   renderTable();
 });
 
-document.querySelectorAll("thead th[data-col]").forEach(th => {
-  th.addEventListener("click", () => {
-    const col = th.dataset.col;
-    if (sortCol === col) sortDir *= -1;
-    else { sortCol = col; sortDir = 1; }
-    renderTable();
-  });
-});
-
 async function init() {
   APARTMENTS = await loadSheetData();
   buildSVG();
@@ -591,7 +545,6 @@ async function init() {
 
 init().catch(err => console.error("Sheet loading failed:", err));
 </script>
-  
 
 </body>
 </html>
