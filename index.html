@@ -4,7 +4,9 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ZELGLI SKY – Übersicht</title>
+
   <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -24,7 +26,7 @@
     }
 
     html, body {
-      height: 100%;
+      min-height: 100%;
       background: var(--bg);
       color: var(--text);
       font-family: 'DM Mono', monospace;
@@ -126,16 +128,32 @@
     }
 
     .main {
-      display: grid;
-      grid-template-columns: 420px 1fr;
-      height: calc(100vh - 105px);
+      display: flex;
+      flex-direction: column;
+      height: auto;
+      overflow: visible;
+    }
+
+    .svg-panel {
+      order: 1;
+      height: 360px;
+      padding: 18px;
+      background: var(--bg);
+      border-bottom: 2px solid var(--border);
       overflow: hidden;
     }
 
     .table-panel {
-      border-right: 2px solid var(--border);
-      overflow-y: auto;
+      order: 2;
+      border-right: none;
+      overflow-y: visible;
       background: var(--surface);
+    }
+
+    #building-svg {
+      width: 100%;
+      height: 100%;
+      display: block;
     }
 
     table {
@@ -218,21 +236,6 @@
       white-space: nowrap;
     }
 
-    .svg-panel {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 18px;
-      background: var(--bg);
-      overflow: hidden;
-      position: relative;
-    }
-
-    #building-svg {
-      width: 100%;
-      height: 100%;
-    }
-
     .apt-unit {
       cursor: pointer;
       transition: opacity 0.15s;
@@ -266,21 +269,13 @@
         padding: 10px 18px;
       }
 
-      .main {
-        grid-template-columns: 1fr;
-        grid-template-rows: auto 60vh;
-        height: auto;
+      .svg-panel {
+        height: 300px;
+        padding: 8px;
       }
 
       .table-panel {
-        border-right: none;
-        border-bottom: 2px solid var(--border);
-        max-height: 55vh;
-      }
-
-      .svg-panel {
-        min-height: 60vh;
-        padding: 8px;
+        max-height: none;
       }
     }
   </style>
@@ -316,6 +311,10 @@
 </div>
 
 <div class="main">
+  <div class="svg-panel">
+    <svg id="building-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 520"></svg>
+  </div>
+
   <div class="table-panel">
     <table>
       <thead>
@@ -329,10 +328,6 @@
       </thead>
       <tbody id="apt-tbody"></tbody>
     </table>
-  </div>
-
-  <div class="svg-panel">
-    <svg id="building-svg" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 1500"></svg>
   </div>
 </div>
 
@@ -435,13 +430,14 @@
     return rect;
   }
 
-  function createText(x, y, text, size = 26) {
+  function createText(x, y, text, size = 18) {
     const t = document.createElementNS(SVG_NS, "text");
     t.setAttribute("x", x);
     t.setAttribute("y", y);
     t.setAttribute("font-family", "Helvetica, Arial, sans-serif");
     t.setAttribute("font-size", size);
     t.setAttribute("fill", "#1a1a1a");
+    t.setAttribute("text-anchor", "middle");
     t.setAttribute("dominant-baseline", "middle");
     t.textContent = text;
     return t;
@@ -452,55 +448,56 @@
 
     const scene = document.createElementNS(SVG_NS, "g");
 
-    const lightW = 78;
+    const lightH = 78;
+    const normalW = 58;
+    const wideW = normalW * 1.35;
     const gapX = 7;
-    const normalH = 58;
-    const tallH = normalH * 1.35;
-    const gapY = 7;
 
-    const rightEdge = 620;
-    const numberX = rightEdge + 72;
+    const largeDarkH = lightH * 2.5 * 0.6;
+    const smallDarkH = lightH * 1.5 * 0.6;
 
-    const largeDarkW = lightW * 2.5 * 0.6;
-    const smallDarkW = lightW * 1.5 * 0.6;
+    const topY = 80;
+    const numberY = 455;
 
-    let y = 0;
+    let x = 0;
 
     APARTMENTS.forEach(apt => {
       const isSmall = [4, 5, 11, 12].includes(apt.id);
-      const isTall = [4, 5].includes(apt.id);
-      const h = isTall ? tallH : normalH;
-      const darkW = isSmall ? smallDarkW : largeDarkW;
+      const isWide = [4, 5].includes(apt.id);
+
+      const unitW = isWide ? wideW : normalW;
+      const darkH = isSmall ? smallDarkH : largeDarkH;
       const colors = getStatusColors(apt.status);
 
-      const totalW = darkW + gapX + lightW;
-      const x = rightEdge - totalW;
+      const balconyY = topY;
+      const livingY = topY + lightH;
+      const totalH = lightH + darkH;
 
       const unit = document.createElementNS(SVG_NS, "g");
       unit.setAttribute("class", "apt-unit");
       unit.setAttribute("id", `svg-apt-${apt.id}`);
       unit.setAttribute("data-id", apt.id);
 
-      unit.appendChild(createRect(x, y, darkW, h, colors.living, "living"));
-      unit.appendChild(createRect(x + darkW + gapX, y, lightW, h, colors.balcony, "balcony"));
+      unit.appendChild(createRect(x, balconyY, unitW, lightH, colors.balcony, "balcony"));
+      unit.appendChild(createRect(x, livingY, unitW, darkH, colors.living, "living"));
 
-      const outline = createRect(x, y, totalW, h, "none", "apt-outline");
+      const outline = createRect(x, balconyY, unitW, totalH, "none", "apt-outline");
       outline.setAttribute("stroke", "transparent");
       outline.setAttribute("stroke-width", "3");
       unit.appendChild(outline);
 
-      unit.appendChild(createText(numberX, y + h / 2, apt.id, 30));
+      unit.appendChild(createText(x + unitW / 2, numberY, apt.id, 18));
 
       scene.appendChild(unit);
 
-      y += h + gapY;
+      x += unitW + gapX;
     });
 
     svg.appendChild(scene);
 
     const bbox = scene.getBBox();
     const vb = svg.viewBox.baseVal;
-    const margin = 60;
+    const margin = 20;
 
     const scale = Math.min(
       (vb.width - margin * 2) / bbox.width,
@@ -515,10 +512,6 @@
     svg.querySelectorAll(".apt-unit").forEach(el => {
       el.addEventListener("mouseenter", () => highlightApt(el.dataset.id, true));
       el.addEventListener("mouseleave", () => highlightApt(el.dataset.id, false));
-      el.addEventListener("click", () => {
-        const apt = APARTMENTS.find(a => a.id === +el.dataset.id);
-        if (apt && apt.factsheet && apt.factsheet !== "#") window.location.href = apt.factsheet;
-      });
     });
   }
 
@@ -565,10 +558,6 @@
     tbody.querySelectorAll("tr").forEach(row => {
       row.addEventListener("mouseenter", () => highlightApt(row.dataset.id, true));
       row.addEventListener("mouseleave", () => highlightApt(row.dataset.id, false));
-      row.addEventListener("click", () => {
-        const apt = APARTMENTS.find(a => a.id === +row.dataset.id);
-        if (apt && apt.factsheet && apt.factsheet !== "#") window.location.href = apt.factsheet;
-      });
     });
 
     document.querySelectorAll(".apt-unit").forEach(el => {
@@ -629,18 +618,18 @@
 
     APARTMENTS = [
       { id: 1, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
-      { id: 2, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
+      { id: 2, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
       { id: 3, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 4, type: "T2", rooms: 2.0, size: 52, status: "Vermietet", factsheet: "#" },
-      { id: 5, type: "T2", rooms: 2.0, size: 52, status: "Reserviert", factsheet: "#" },
-      { id: 6, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" },
+      { id: 4, type: "T3", rooms: 1.5, size: 32, status: "Verfügbar", factsheet: "#" },
+      { id: 5, type: "T3", rooms: 1.5, size: 32, status: "Verfügbar", factsheet: "#" },
+      { id: 6, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
       { id: 7, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" },
-      { id: 8, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 9, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
+      { id: 8, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" },
+      { id: 9, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
       { id: 10, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
-      { id: 11, type: "T3", rooms: 1.5, size: 32, status: "Vermietet", factsheet: "#" },
-      { id: 12, type: "T3", rooms: 1.5, size: 32, status: "Reserviert", factsheet: "#" },
-      { id: 13, type: "T1", rooms: 2.5, size: 68, status: "Reserviert", factsheet: "#" },
+      { id: 11, type: "T2", rooms: 2.0, size: 52, status: "Reserviert", factsheet: "#" },
+      { id: 12, type: "T2", rooms: 2.0, size: 52, status: "Verfügbar", factsheet: "#" },
+      { id: 13, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
       { id: 14, type: "T1", rooms: 2.5, size: 68, status: "Verfügbar", factsheet: "#" },
       { id: 15, type: "T1", rooms: 2.5, size: 68, status: "Vermietet", factsheet: "#" }
     ];
